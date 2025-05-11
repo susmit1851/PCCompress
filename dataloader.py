@@ -85,7 +85,18 @@ def parse_off(filepath, num_pts_triangle=300):
 
 
 
-
+def collate_fn(batch):
+    max_len = max(pc.shape[0] for pc in batch)
+    padded_batch = []
+    masked_batch = []
+    for pc in batch:
+        len = pc.shape[0]
+        pad_len = max_len - len
+        padding = torch.concat([pc, torch.zeros((pad_len,3))], dim=0)
+        masking = torch.concat([torch.ones(pc.shape[0]), torch.zeros(pad_len)], dim=0)
+        padded_batch.append(padding)
+        masked_batch.append(masking)
+    return torch.stack(padded_batch), torch.stack(masked_batch)
 
 
 class PCDataset(Dataset):
@@ -98,9 +109,11 @@ class PCDataset(Dataset):
         for class_name in os.listdir(data_dir):
             if class_name in skip_classes:
                 continue
+            elif ".DS_Store" in class_name:
+                continue 
             class_path = os.path.join(data_dir, class_name, split)
             for fname in os.listdir(class_path):
-                if fname.endswith('.off'):
+                if fname.endswith('.off') :
                     self.file_paths.append(os.path.join(class_path, fname))
 
     def __len__(self):
@@ -114,4 +127,4 @@ class PCDataset(Dataset):
 
 def getDataloader(data_dir, split, batch_size = 8, num_pts_triangle = 500, shuffle = True):
     dataset = PCDataset(data_dir=data_dir, split=split, num_pts_triangle=num_pts_triangle)
-    return DataLoader(dataset=dataset, batch_size=batch_size, shuffle=shuffle, drop_last=True)
+    return DataLoader(dataset=dataset, batch_size=batch_size, shuffle=shuffle, drop_last=True, collate_fn=collate_fn, num_workers=4)
