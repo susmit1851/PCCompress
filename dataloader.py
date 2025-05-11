@@ -84,7 +84,7 @@ class PCDataset(Dataset):
 
 def getDataloader(data_dir, split, batch_size = 8, num_pts_triangle = 500, shuffle = True):
     dataset = PCDataset(data_dir=data_dir, split=split, num_pts_triangle=num_pts_triangle)
-    return DataLoader(dataset=dataset, batch_size=batch_size, shuffle=shuffle, drop_last=True)
+    return DataLoader(dataset=dataset, batch_size=batch_size, shuffle=shuffle, num_workers = 4, drop_last=True)
 
 
 
