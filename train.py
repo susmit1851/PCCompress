@@ -7,15 +7,15 @@ import multiprocessing
 def main():
     chamfer_dist = ChamferDistance()
 
-    device = ('mps' if torch.mps.is_available() else 'cpu')
+    device = ('cuda:0' if torch.cuda.is_available() else 'cpu')
 
     encoder = Encoder().to(device)
     decoder = Decoder(input_dim=2).to(device)
 
     optimiser = optim.Adam(list(encoder.parameters())+list(decoder.parameters()), lr = 1e-3)
 
-    train_loader = getDataloader(data_dir='ModelNet10', split='train', batch_size=1)
-    test_loader = getDataloader(data_dir='ModelNet10', split='test', batch_size=1)
+    train_loader = getDataloader(data_dir='./../ModelNet10', split='train', batch_size=1)
+    test_loader = getDataloader(data_dir='./../ModelNet10', split='test', batch_size=1)
 
     num_epochs = 100
 
