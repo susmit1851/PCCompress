@@ -125,6 +125,6 @@ class PCDataset(Dataset):
         point_cloud = np.array(point_cloud, dtype=np.float32)
         return torch.from_numpy(point_cloud)
 
-def getDataloader(data_dir, split, batch_size = 8, num_pts_triangle = 500, shuffle = True):
+def getDataloader(data_dir, split, batch_size = 8, num_pts_triangle = 100, shuffle = True):
     dataset = PCDataset(data_dir=data_dir, split=split, num_pts_triangle=num_pts_triangle)
     return DataLoader(dataset=dataset, batch_size=batch_size, shuffle=shuffle, drop_last=True, collate_fn=collate_fn, num_workers=4)

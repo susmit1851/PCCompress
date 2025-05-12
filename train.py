@@ -14,7 +14,7 @@ def main():
 
     optimiser = optim.Adam(list(encoder.parameters())+list(decoder.parameters()), lr = 1e-3)
 
-    train_loader = getDataloader(data_dir='./../ModelNet10', split='train', batch_size=1)
+    train_loader = getDataloader(data_dir='./../ModelNet10', split='train', batch_size=2)
     test_loader = getDataloader(data_dir='./../ModelNet10', split='test', batch_size=1)
 
     num_epochs = 100
@@ -48,16 +48,17 @@ def main():
         decoder.eval()
 
         val_loss = 0.0
+        with torch.no_grad():
+            for batch,_ in tqdm(test_loader, desc=f"Epoch {epoch+1}/{num_epochs} [Validation]"):
+                batch = batch.to(device).float()
 
-        for batch,_ in tqdm(test_loader, desc=f"Epoch {epoch+1}/{num_epochs} [Validation]"):
-            batch = batch.to(device).float()
 
+                emb = encoder(batch)
+                recon = decoder(emb)
 
-            emb = encoder(batch)
-            recon = decoder(emb)
-
-            loss = chamfer_dist(recon, batch)
-            running_loss += loss.item()
+                loss = chamfer_dist(recon, batch)
+                val_loss += loss.item()
+                torch.cuda.empty_cache()
 
         avg_val_loss = val_loss / len(test_loader)
         print(f"Epoch {epoch+1} Train Loss: {avg_val_loss:.6f}")
