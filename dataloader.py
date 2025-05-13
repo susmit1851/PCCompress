@@ -100,10 +100,11 @@ def collate_fn(batch):
 
 
 class PCDataset(Dataset):
-    def __init__(self, data_dir, split, num_pts_triangle=500):
+    def __init__(self, data_dir, split, num_pts_triangle=500, num_points = 1024):
         self.file_paths = []
         self.num_pts_triangle = num_pts_triangle
         self.split = split
+        self.num_points = num_points
         skip_classes = {'monitor', 'bed'} if split == 'train' else set()
 
         for class_name in os.listdir(data_dir):
@@ -118,13 +119,25 @@ class PCDataset(Dataset):
 
     def __len__(self):
         return len(self.file_paths)
+    
+    def randomly_sample(self, x, num_points):
+        N, _ = x.shape
+        if num_points > N:
+            return x
+        else:
+            indices = torch.randperm(N)[:num_points]
+            return x[indices]
 
     def __getitem__(self, idx):
         file_path = self.file_paths[idx]
         point_cloud = parse_off(file_path, num_pts_triangle=self.num_pts_triangle)
         point_cloud = np.array(point_cloud, dtype=np.float32)
-        return torch.from_numpy(point_cloud)
+        pc = torch.from_numpy(point_cloud)
+        return self.randomly_sample(pc, num_points=self.num_points)
 
-def getDataloader(data_dir, split, batch_size = 8, num_pts_triangle = 100, shuffle = True):
+    
+
+
+def getDataloader(data_dir, split, batch_size = 8, num_pts_triangle = 100, num_points = 1024, shuffle = True):
     dataset = PCDataset(data_dir=data_dir, split=split, num_pts_triangle=num_pts_triangle)
     return DataLoader(dataset=dataset, batch_size=batch_size, shuffle=shuffle, drop_last=True, collate_fn=collate_fn, num_workers=4)
